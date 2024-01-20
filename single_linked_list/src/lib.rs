@@ -19,20 +19,12 @@ impl<T> SingleLinkedList<T> {
         Self {
             next: Some(Box::new(node))
         }
-    }    
-    // pub fn tail(&self) -> Option<&Node<T>> {
-    //     let mut reference = &self.next;
-    //     while match reference { Some(_) => true, _ => false, } {
-    //         reference = match reference.as_ref().unwrap().get_next() {
-    //             Some(node) => node.as_ref().get_next(),
-    //             _ => break,
-    //         }
-    //     }
-    //     match reference.as_ref() {
-    //         Some(node) => Some(node),
-    //         None => None,
-    //     }
-    // }
+    }
+
+    pub fn search(&self, value: T) -> Option<&Node<T>> {
+        let mut reference = &self.next;
+        todo!();
+    }
 
     #[must_use]
     pub fn tail(&self) -> Option<&Node<T>> {
