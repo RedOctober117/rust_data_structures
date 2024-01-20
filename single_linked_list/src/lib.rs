@@ -6,7 +6,7 @@ pub struct SingleLinkedList<T> {
     next: Option<Box<Node<T>>>,
 }
 
-impl<T> SingleLinkedList<T> {
+impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
 
     #[must_use]
     pub const fn new() -> Self {
@@ -21,9 +21,17 @@ impl<T> SingleLinkedList<T> {
         }
     }
 
-    pub fn search(&self, value: T) -> Option<&Node<T>> {
+    pub fn search(&self, value: &T) -> Option<&Node<T>> {
         let mut reference = &self.next;
-        todo!();
+        // Run while has next node and subnode_value != value
+        while reference.as_ref().map_or(false, |subnode| subnode.has_next()) &
+            reference.as_ref().map_or(false, |subnode| subnode.value.as_ref().map_or(true, |subnode_value| subnode_value == value)) {
+                reference = match reference {
+                    Some(subnode) => &subnode.next,
+                    None => break,
+                };
+        }
+        reference.as_deref()
     }
 
     #[must_use]
@@ -46,34 +54,34 @@ pub struct Node<T> {
 
 impl<T> Node<T> {
 
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            next: None,
+            value: None,
+        }
+    }
 
-    // pub fn get_next(&self) -> Option<&Box<Node<T>>> {
-    //     match &self.next {
-    //         Some(subnode) => Some(subnode),
-    //         None => None,
-    //     }
-    // }
+    pub fn new_with_next(next: Self) -> Self {
+        Self {
+            next: Some(Box::new(next)),
+            value: None,
+        }
+    }
 
-    // pub fn get_next_mut(&mut self) -> Option<&mut Box<Node<T>>> {
-    //     match &mut self.next {
-    //         Some(subnode) => Some(subnode),
-    //         None => None,
-    //     }
-    // }
+    pub const fn new_with_value(value: T) -> Self {
+        Self {
+            next: None,
+            value: Some(value),
+        }
+    }
 
-    // pub fn get_value(&self) ->  Option<&T> {
-    //     match &self.value {
-    //         Some(value) => Some(value),
-    //         None => None,
-    //     }
-    // }
-
-    // pub fn get_value_mut(&mut self) -> Option<&mut T> {
-    //     match &mut self.value {
-    //         Some(value) => Some(value),
-    //         None => None,
-    //     }
-    // }
+    pub fn new_with_ref_and_value(next: Self, value: T) -> Self {
+        Self {
+            next: Some(Box::new(next)),
+            value: Some(value),
+        }
+    }
 
     pub const fn has_next(&self) -> bool {
         self.next.is_some()
@@ -109,61 +117,18 @@ mod tests {
         assert!(list.tail().is_none());
     }
 
-    // #[test]
-    // fn tail_mut_exists_test() {
-    //     let mut list: SingleLinkedList<i32> = SingleLinkedList {
-    //         next: Some(Box::new(Node {
-    //             next: None,
-    //             value: Some(8),
-    //         })),
-    //     };
+    #[test]
+    fn valid_search() {
+        let list: SingleLinkedList<i32> = SingleLinkedList::new_with_node(Node::new_with_value(8));
+        
+        assert!(list.search(&8).is_some());
+    }
 
-    //     assert!(match list.tail_mut() {
-    //         Some(_) => true,
-    //         None => false,
-    //     });
-    // }
+    #[test]
+    fn invalid_search() {
+        let list: SingleLinkedList<i32> = SingleLinkedList::new();
+        
+        assert!(list.search(&8).is_none());
+    }
 
-    // #[test]
-    // fn tail_mut_not_exists_test() {
-    //     let mut list: SingleLinkedList<i32> = SingleLinkedList {
-    //         next: None,
-    //     };
-
-    //     assert!(match list.tail_mut() {
-    //         Some(_) => false,
-    //         None => true,
-    //     });
-    // }
-
-    // #[test]
-    // fn tail_value() {
-
-    // }
-
-    // #[test]
-    // fn tail_change() {
-    //     let mut list: SingleLinkedList<i32> = SingleLinkedList {
-    //         next: Some(Box::new(Node {
-    //             next: None,
-    //             value: Some(8),
-    //         })),
-    //     };
-
-    //     match list.tail_mut() {
-    //         Some(subnode) => *subnode.get_value_mut() = Some(10),
-    //         None => panic!("you fucked up"),
-    //     };
-
-    //     assert!(match list.tail() {
-    //         Some(subnode) => match subnode.get_value() {
-    //             Some(value) => match value {
-    //                 10 => true,
-    //                 _ => false,
-    //             },
-    //             _ => false, 
-    //         }
-    //         None => false,
-    //     });
-    // }
 }
