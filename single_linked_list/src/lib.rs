@@ -1,6 +1,7 @@
 use std::fmt;
 
 // RUN BACON CLIPPY BRO
+// Result either contains a Ok() or an error type of your choosing
 
 pub struct SingleLinkedList<T> {
     next: Option<Box<Node<T>>>,
@@ -21,7 +22,19 @@ impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
         }
     }
 
-    pub fn search(&self, value: &T) -> Option<&Node<T>> {
+    pub fn add(&mut self, node: Node<T>) {
+        match self.tail_mut() {
+            Some(subnode) => subnode.next = Some(Box::new(node)),
+            None => self.next = Some(Box::new(node)),
+        }
+    }
+
+
+    ///
+    /// # Errors
+    /// 
+    /// Will return `Err` if no valid node exists
+    pub fn search(&self, value: &T) -> Result<&Node<T>, NodeNotFoundError>  {
         let mut reference = &self.next;
         // Run while has next node and subnode_value != value
         while reference.as_ref().map_or(false, |subnode| subnode.has_next()) &
@@ -31,7 +44,12 @@ impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
                     None => break,
                 };
         }
-        reference.as_deref()
+        // match reference.as_deref() {
+        //     Some(node) => Ok(node),
+        //     None => Err(NodeNotFoundError{}),
+        // }
+
+        reference.as_deref().ok_or(NodeNotFoundError{})
     }
 
     #[must_use]
@@ -45,6 +63,21 @@ impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
         }
         reference.as_deref()
     }
+
+    pub fn tail_mut(&mut self) -> Option<&mut Node<T>> {
+        let mut reference = &mut self.next;
+        while reference.as_mut().map_or(false, |node| node.has_next()) {
+            reference = match reference {
+                Some(subnode) => &mut subnode.next,
+                None => break,
+            };
+        }
+        reference.as_deref_mut()
+    }
+}
+
+pub struct NodeNotFoundError {
+
 }
 
 pub struct Node<T> {
@@ -121,14 +154,21 @@ mod tests {
     fn valid_search() {
         let list: SingleLinkedList<i32> = SingleLinkedList::new_with_node(Node::new_with_value(8));
         
-        assert!(list.search(&8).is_some());
+        assert!(list.search(&8).is_ok());
     }
 
     #[test]
     fn invalid_search() {
         let list: SingleLinkedList<i32> = SingleLinkedList::new();
         
-        assert!(list.search(&8).is_none());
+        assert!(list.search(&8).is_err());
+    }
+
+    #[test]
+    fn add() {
+        let mut list: SingleLinkedList<i32> = SingleLinkedList::new();
+        list.add(Node::new_with_value(8));
+        assert_eq!(list.tail().expect("test failed, node does not exist or has wrong value.").value, Some(8));
     }
 
 }
