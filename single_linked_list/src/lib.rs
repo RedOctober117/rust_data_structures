@@ -1,10 +1,13 @@
-use std::fmt;
+use std::{fmt, ops::Index};
+
+use color_eyre::IndentedSection;
 
 // RUN BACON CLIPPY BRO
-// Result either contains a Ok() or an error type of your choosing
+// Result either contains an Ok() or an error type of your choosing
 
 pub struct SingleLinkedList<T> {
-    next: Option<Box<Node<T>>>,
+    head: Option<Box<Node<T>>>,
+    length: i32,
 }
 
 impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
@@ -12,21 +15,56 @@ impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            next: None,
+            head: None,
+            length: 0,
         }
     }
 
     pub fn new_with_node(node: Node<T>) -> Self {
         Self {
-            next: Some(Box::new(node))
+            head: Some(Box::new(node)),
+            length: 0,
         }
     }
 
-    pub fn add(&mut self, node: Node<T>) {
+    pub fn add_node(&mut self, node: Node<T>) {
         match self.tail_mut() {
             Some(subnode) => subnode.next = Some(Box::new(node)),
-            None => self.next = Some(Box::new(node)),
+            None => self.head = Some(Box::new(node)),
+        };
+    }
+
+    pub fn add(&mut self, value: T) {
+        match self.tail_mut() {
+            Some(subnode) => subnode.next = Some(Box::new(Node::new_with_value(value))),
+            None => self.head = Some(Box::new(Node::new_with_value(value))),
+        };
+        self.length += 1;
+    }
+
+    pub fn get(&self, index: i32) -> Result<&Node<T>, IndexOutOfBounds> {
+        if index >= self.length {
+            return Err(IndexOutOfBounds { });
         }
+        let mut reference = &self.head;
+        let mut counter = 0;
+        while counter < index {
+            reference = &reference.as_ref().unwrap().next;
+            counter = counter + 1;
+        }
+        Ok(reference.as_ref().unwrap())
+    }
+
+    pub fn insert(&mut self, index: i32, value: T) -> Result<bool, IndexOutOfBounds> {
+        if index >= self.length { 
+            return Err(IndexOutOfBounds{ }); 
+        }
+        let mut prev_node = self.get(index - 1);
+        let mut post_node = self.get(index);
+        let new_node = Node::new_with_ref_and_value(post_node.ok().unwrap().to_owned(), value);
+        self.length += 1;
+
+        Ok(true)
     }
 
 
@@ -35,7 +73,7 @@ impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
     /// 
     /// Will return `Err` if no valid node exists
     pub fn search(&self, value: &T) -> Result<&Node<T>, NodeNotFoundError>  {
-        let mut reference = &self.next;
+        let mut reference = &self.head;
         // Run while has next node and subnode_value != value
         while reference.as_ref().map_or(false, |subnode| subnode.has_next()) &
             reference.as_ref().map_or(false, |subnode| subnode.value.as_ref().map_or(true, |subnode_value| subnode_value == value)) {
@@ -44,17 +82,13 @@ impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
                     None => break,
                 };
         }
-        // match reference.as_deref() {
-        //     Some(node) => Ok(node),
-        //     None => Err(NodeNotFoundError{}),
-        // }
 
         reference.as_deref().ok_or(NodeNotFoundError{})
     }
 
     #[must_use]
     pub fn tail(&self) -> Option<&Node<T>> {
-        let mut reference = &self.next;
+        let mut reference = &self.head;
         while reference.as_ref().map_or(false, |node| node.has_next()) {
             reference = match reference {
                 Some(subnode) => &subnode.next,
@@ -65,7 +99,7 @@ impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
     }
 
     pub fn tail_mut(&mut self) -> Option<&mut Node<T>> {
-        let mut reference = &mut self.next;
+        let mut reference = &mut self.head;
         while reference.as_mut().map_or(false, |node| node.has_next()) {
             reference = match reference {
                 Some(subnode) => &mut subnode.next,
@@ -76,9 +110,8 @@ impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
     }
 }
 
-pub struct NodeNotFoundError {
-
-}
+pub struct NodeNotFoundError { }
+pub struct IndexOutOfBounds { }
 
 pub struct Node<T> {
     next: Option<Box<Node<T>>>,
@@ -173,8 +206,25 @@ mod tests {
     #[test]
     fn add() {
         let mut list: SingleLinkedList<i32> = SingleLinkedList::new();
-        list.add(Node::new_with_value(8));
+        list.add_node(Node::new_with_value(8));
         assert_eq!(list.tail().expect("test failed, node does not exist or has wrong value.").value, Some(8));
+    }
+
+    #[test]
+    fn get() {
+        let mut list: SingleLinkedList<i32> = SingleLinkedList::new();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        list.add(4);
+
+        assert!(match list.get(3) {
+            Ok(node) => match node.value {
+                Some(4) => true,
+                _ => false,
+            },
+            _ => false,
+        });
     }
 
 }
