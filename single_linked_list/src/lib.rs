@@ -121,6 +121,12 @@ impl<T> Node<T> {
     }
 }
 
+impl<T> Default for Node<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: std::fmt::Debug> fmt::Display for Node<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{{ {:?} }}", self.value)
