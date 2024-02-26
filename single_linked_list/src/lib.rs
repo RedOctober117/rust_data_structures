@@ -1,7 +1,5 @@
 use std::{fmt, ops::Index};
 
-use color_eyre::IndentedSection;
-
 // RUN BACON CLIPPY BRO
 // Result either contains an Ok() or an error type of your choosing
 
